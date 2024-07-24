@@ -1,0 +1,828 @@
+#include <stdio.h>
+#include <math.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+#define MAX_LENGTH 250 // Defining macro constant for the total length of a string in the excel sheet
+#define MAX_LINE 211 // Defining macro constant for the total amount of lines in excel sheet
+
+/* Creation of a typdef structure, the significant arrays that are used within the rest of the code are defined with comments */
+typedef struct {	
+	int REF_date; // Data for each Year
+	char GEO[32]; // Data for Country/Province
+	char DGUID[12];
+	char ageGroup[20]; // Data for Age Ranges
+	char sex[10]; // Data for Gender
+	char indicators[10];
+	char characterictics[8];
+	char UOM[8];
+	int UOM_ID;
+	char scalarFactor[6];
+	int scalarID;
+	char vector[10];
+	char coordinates[10];
+	double value; // Data for Percentage With Diabetes
+	char status[1];
+	char symbol[1];
+	char terminated[1];
+	int decimal;
+} varOrg; // alias for typedef structure
+
+// cleans the code of any extra characters such as quotations, hyphens or dots after taking the data through pointers and returning it
+void
+dataCleaner(char *pointer) {
+    int x = 0;
+    for (int i = 0; pointer[i] != '\0'; i++) {
+        if (pointer[i] != '"') {
+            pointer[x++] = pointer[i]; 
+        }
+    }
+    pointer[x] = '\0'; // before the data is returned, a \0 is added to signify the end of the string
+}
+
+double Question2(double ON, double QC, double AB, double BC, double*lowestpercent, double*highestpercent) {
+
+	// If statements comparing each province average with the rest, starting with determining the highest then determining the lowest between the remaining
+
+    if(ON>=QC && ON>=AB && ON>=BC) {
+        *highestpercent = ON;
+        
+        if(QC<=AB && QC<=BC){
+            *lowestpercent = QC;
+        } else if(AB<=QC && AB<=BC) {
+            *lowestpercent = AB;
+        } else if(BC<=QC && BC<=AB) {
+            *lowestpercent = BC;
+        }
+        
+    } else if(QC>=ON && QC>=AB && QC>=BC) {
+        *highestpercent = QC;
+        if(ON<=AB && ON<=BC) {
+            *lowestpercent = ON;
+        } else if(AB<=ON && AB<=BC) {
+            *lowestpercent = AB;
+        } else if(BC<=ON && BC<=AB) {
+           *lowestpercent = BC;
+        }
+        
+    } else if(AB>=ON && AB>=QC && AB>=BC) {
+        *highestpercent = AB;
+        if(ON<=QC && ON<=BC){
+            
+        *lowestpercent = ON;
+        } else if(QC<=ON && QC<=BC)  {
+            *lowestpercent = QC;
+        }  else if(BC<=ON && BC<=QC) {
+            *lowestpercent = BC;
+        }
+  
+    } else if(BC>=ON && BC>=QC && BC>=AB) {
+        *highestpercent = BC;
+        
+        if(ON<=QC && ON<=AB) {
+            *lowestpercent = ON;
+        } else if(QC<=ON && QC<=AB) {
+            *lowestpercent = QC;
+        } else if(AB<=ON && AB<=QC) {
+            *lowestpercent = AB;
+         }
+      }
+  	}
+
+int 
+main () {
+
+	varOrg s[211]; // assigns 211 rows to the structure, the s makes the array act as a pointer and can be editted later
+
+	FILE* data = fopen("statscan_diabetes.csv", "r"); // file opening excel file and reading data
+	   	
+	char dataline[MAX_LENGTH]; // creation of array holding data
+		
+	int i = 0;
+		
+	char *pointer; // arbitrary pointer used to transfer data to places such as functions or arrays
+		
+	/* While loop retrieves data, splits line with strtok to obtain data for each cell, sends it through the dataCleaner function 
+	and places data in respective array in typedef structure */
+    
+	while (i < MAX_LINE){ 
+		fgets(dataline, MAX_LENGTH, data);
+		pointer = strtok(dataline, ","); // Year
+		dataCleaner(pointer);
+		s[i].REF_date = atoi(pointer);
+
+		pointer = strtok(NULL, ","); // Country/Province
+		dataCleaner(pointer);
+		strcpy(s[i].GEO,pointer);
+			
+		pointer = strtok(NULL, ","); 
+		dataCleaner(pointer);
+		strcpy(s[i].DGUID, pointer);
+			
+		pointer = strtok(NULL, ","); // Age Group
+		dataCleaner(pointer);
+		strcpy(s[i].ageGroup, pointer);
+			
+		pointer = strtok(NULL, ","); // Gender
+		dataCleaner(pointer);
+		strcpy(s[i].sex, pointer);
+			
+		pointer = strtok(NULL, ","); 
+		dataCleaner(pointer);
+		strcpy(s[i].indicators, pointer);
+		
+		pointer = strtok(NULL, ",");
+		dataCleaner(pointer);
+		strcpy(s[i].characterictics, pointer);
+			
+		pointer = strtok(NULL, ",");
+		dataCleaner(pointer);
+		strcpy(s[i].UOM, pointer);
+			
+		pointer = strtok(NULL, ",");
+		dataCleaner(pointer);
+		s[i].UOM_ID = atoi(pointer);
+
+		pointer = strtok(NULL, ",");
+		dataCleaner(pointer);
+		strcpy(s[i].scalarFactor, pointer);
+			
+		pointer = strtok(NULL, ",");
+		dataCleaner(pointer);
+		s[i].scalarID = atoi(pointer);
+			
+		pointer = strtok(NULL, ",");
+		dataCleaner(pointer);
+		strcpy(s[i].vector, pointer);
+
+		pointer = strtok(NULL, ",");
+		dataCleaner(pointer);
+		strcpy(s[i].coordinates, pointer);
+		
+		pointer = strtok(NULL, ","); // Percentage
+		dataCleaner(pointer);
+		s[i].value = atof(pointer);
+			
+		pointer = strtok(NULL,  ",");
+		dataCleaner(pointer);
+		strcpy(s[i].status, pointer);
+
+		pointer = strtok(NULL,  ",");
+		dataCleaner(pointer);
+		strcpy(s[i].symbol, pointer);
+
+		pointer = strtok(NULL,  ",");
+		dataCleaner(pointer);
+		strcpy(s[i].terminated, pointer);
+
+		pointer = strtok(NULL, ","); 
+		dataCleaner(pointer);
+		s[i].decimal = atoi(pointer);
+
+		i++;
+	}
+	fclose(data);
+		
+	printf("------------------------------------------------------------------------------------------------\n");	
+	printf("\tSTATISTICS CANADA REPORT OVERVIEW OF DIABETES CASES FOR THE POPULATION OF CANADA");
+	printf("\n------------------------------------------------------------------------------------------------\n");
+
+	// Question 1A (and the code for Question 1B)
+
+	printf("\n---------------------------------------- Question 1A -------------------------------------------\n");
+		
+	printf("\nProvincial Percentage Averages:\n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+		
+	/* Quebec Percentage Average for Diabetes Calculations STARTS */
+	int comparisonFactor, j;
+	char Quebec[] = "Quebec";
+	int QuebecCount = 0, QuebecLoss = 0;
+	double sumQuebecPercent = 0;
+		
+	for(j = 0; j < MAX_LINE; j++) {
+	comparisonFactor = strcmp(s[j].GEO, Quebec);
+		
+		if (comparisonFactor == 0) 
+		{
+		QuebecCount += 1;
+		sumQuebecPercent = sumQuebecPercent + s[j].value;
+		if (s[j].value == 0) 
+		{
+		QuebecLoss += 1;
+		}
+		}
+	}
+
+	double QuebecAvg = (sumQuebecPercent / (QuebecCount - QuebecLoss));
+	printf("Quebec: %.2lf%% \n", QuebecAvg);
+	/* Quebec Percentage Average for Diabetes Calculations ENDS */
+		
+    
+	/* Ontario Percentage Average for Diabetes Calculations STARTS */
+	char Ontario[] = "Ontario";
+	int OntarioCount = 0, OntarioLoss = 0;
+	double sumOntarioPercent = 0;
+		
+	for(j = 0; j < MAX_LINE; j++) {
+	comparisonFactor = strcmp(s[j].GEO, Ontario);
+	
+		if (comparisonFactor == 0) 
+		{
+		OntarioCount += 1;
+		sumOntarioPercent = sumOntarioPercent + s[j].value;
+		if (s[j].value == 0) 
+		{
+		OntarioLoss += 1;
+		}
+		}
+	}
+	
+	double OntarioAvg = (sumOntarioPercent / (OntarioCount - OntarioLoss));
+	printf("Ontario: %.2lf%% \n", OntarioAvg);
+	/* Ontario Percentage Average for Diabetes Calculations ENDS */
+		
+
+	/* Alberta Percentage Average for Diabetes Calculations STARTS */
+	char Alberta[] = "Alberta";
+	int AlbertaCount = 0, AlbertaLoss = 0;
+	double sumAlbertaPercent = 0;
+		
+	for(j = 0; j < MAX_LINE; j++) {
+	comparisonFactor = strcmp(s[j].GEO, Alberta);
+	
+		if (comparisonFactor == 0) 
+		{
+		AlbertaCount += 1;
+		sumAlbertaPercent = sumAlbertaPercent + s[j].value;
+		if (s[j].value == 0) 
+		{
+		AlbertaLoss += 1;
+		}
+		}
+	}
+
+	double AlbertaAvg = (sumAlbertaPercent / (AlbertaCount - AlbertaLoss));
+	printf("Alberta: %.2lf%% \n", AlbertaAvg);
+	/* Alberta Percentage Average for Diabetes Calculations ENDS */
+
+
+	/* British Columbia Percentage Average for Diabetes Calculations STARTS */
+	char BC[] = "British Columbia";
+	int BCCount = 0, BCLoss = 0;
+	double sumBCPercent = 0;
+		
+	for(j = 0; j < MAX_LINE; j++) {
+	comparisonFactor = strcmp(s[j].GEO, BC);
+		if (comparisonFactor == 0) 
+		{
+		BCCount += 1;
+		sumBCPercent = sumBCPercent + s[j].value;
+		if (s[j].value == 0) 
+		{
+		BCLoss += 1;
+		}
+		}
+	}
+
+	double BCAvg = (sumBCPercent / (BCCount - BCLoss));
+	printf("British Columbia: %.2lf%% \n", BCAvg);
+	/* British Columbia Percentage Average for Diabetes Calculations ENDS */
+
+
+	printf("\n---------------------------------------- Question 1B -------------------------------------------\n");
+	
+	/* Canada Percentage Average for Diabetes Calculations STARTS */
+	char Canada[] = "Canada (excluding territories)";
+	int CanadaCount = 0, CanadaLoss = 0;
+	double sumCanadaPercent = 0;
+		
+	for(j = 0; j < MAX_LINE; j++) {
+	comparisonFactor = strcmp(s[j].GEO, Canada);
+	
+		if (comparisonFactor == 0) 
+		{
+		CanadaCount += 1;
+		sumCanadaPercent = sumCanadaPercent + s[j].value;
+		if (s[j].value == 0) // accounts for empty data cells in array
+		{ 
+		CanadaLoss += 1;
+		}
+		}
+	}
+
+	double CanadaAvg = (sumCanadaPercent / (CanadaCount - CanadaLoss));
+	
+	printf("\nNational Percentage Average:\n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+
+	printf("Canada (excluding territories): %.2lf%% \n", CanadaAvg);
+  	
+	/* Canada Percentage Average for Diabetes ENDS, Answer is Printed in Subsection Question 1B */
+
+	printf("\n---------------------------------------- Question 1C -------------------------------------------\n");
+		
+	// Print the yearly averages
+	printf("\nYearly Averages (All Age Groups)\n\n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+
+	// Calculate the yearly averages for each region
+	char areas[][32] = {"Ontario", "Quebec", "Alberta", "British Columbia", "Canada (excluding territories)"};
+
+double yearlyAve[7][5] = {0};
+int yearlyCount[7][5] = {0};
+
+for (int year = 2015; year <= 2021; year++) {
+for (int area = 0; area < 5; area++) {
+for (int j = 0; j < MAX_LINE; j++) {
+if (s[j].REF_date == year && strcmp(s[j].GEO, areas[area]) == 0) {
+if (s[j].value == 0) {
+continue; // It skips the line if the value is missing
+}
+yearlyAve[year - 2015][area] += s[j].value;
+yearlyCount[year - 2015][area]++;
+}
+}
+}
+}
+
+
+for (int year = 2015; year <= 2021; year++) {
+    printf("Year: %d\n", year);
+    for (int area = 0; area < 5; area++) {
+        if (yearlyCount[year - 2015][area] == 0) {
+        } else {
+            double ave = yearlyAve[year - 2015][area] / yearlyCount[year - 2015][area];
+            printf("%s: %.2lf%%\n", areas[area], ave);
+        }
+    }
+    printf("\n");
+}
+    
+	printf("\n---------------------------------------- Question 1D -------------------------------------------\n");
+
+	printf("\nAverage Percentage of Diabetes Among Different Age Groups \n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+
+	/* Canada Overall's Average Percentage of Diabetes for 3 Age Groups STARTS */
+	// Defining Bounds for for loop
+	int upperBound = 1 + CanadaCount;
+	int lowerBound = 1;
+		
+
+	// calculate and display average percentage of diabetes by province and age group
+	char ageRangeOne[] = "35 to 49 years";
+	char ageRangeTwo[] = "50 to 64 years";
+	char ageRangeThree[] = "65 years and over";
+		
+	// Age Groups for All of Canada
+	int ageRangeOneCanadaCount = 0; 
+	int ageRangeTwoCanadaCount = 0;
+	int ageRangeThreeCanadaCount = 0;
+		
+	double percentAgeRangeOneCanada = 0;
+	double percentAgeRangeTwoCanada = 0;
+	double percentAgeRangeThreeCanada = 0;
+    
+	// for loop goes through all data, then counts the number of lines  and adds the percentage of the age range for three groups
+	for(j = lowerBound; j < upperBound; j++) {
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeOne);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeOneCanadaCount += 1;
+		percentAgeRangeOneCanada = percentAgeRangeOneCanada + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeOneCanadaCount -= 1;
+			}
+		} 
+		
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeTwo);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeTwoCanadaCount += 1;
+		percentAgeRangeTwoCanada = percentAgeRangeTwoCanada + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeTwoCanadaCount -= 1;
+			}
+		} 
+
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeThree);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeThreeCanadaCount += 1;
+		percentAgeRangeThreeCanada = percentAgeRangeThreeCanada + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeThreeCanadaCount -= 1;
+			}
+		} 
+	}
+       
+	double ageRangeOneCanadaAvg = (percentAgeRangeOneCanada/ageRangeOneCanadaCount);
+	double ageRangeTwoCanadaAvg = (percentAgeRangeTwoCanada/ageRangeTwoCanadaCount);
+	double ageRangeThreeCanadaAvg = (percentAgeRangeThreeCanada/ageRangeThreeCanadaCount);
+		
+	 printf("Canada (excluding territories) ");
+	 printf("\n35 to 49 years: %.2lf%%", ageRangeOneCanadaAvg);
+	 printf("\n60 to 64 years: %.2lf%%", ageRangeTwoCanadaAvg);
+	 printf("\n65 years and over: %.2lf%%", ageRangeThreeCanadaAvg);
+	 printf("\n");
+	/* Canada Overall's Average Percentage of Diabetes for 3 Age Groups ENDS */
+
+	// process is repeated for each province as well
+
+	/* Quebec's Average Percentage of Diabetes for 3 Age Groups STARTS */
+	// Updating Bounds
+	upperBound += CanadaCount;
+	lowerBound += CanadaCount;
+
+	// Age Groups for Quebec
+	int ageRangeOneQuebecCount = 0; 
+	int ageRangeTwoQuebecCount = 0;
+	int ageRangeThreeQuebecCount = 0;
+		
+	double percentAgeRangeOneQuebec = 0;
+	double percentAgeRangeTwoQuebec = 0;
+	double percentAgeRangeThreeQuebec = 0;
+
+	for(j = lowerBound; j < upperBound; j++) 
+	{
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeOne);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeOneQuebecCount += 1;
+		percentAgeRangeOneQuebec = percentAgeRangeOneQuebec + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeOneQuebecCount -= 1;
+			}
+		} 
+		
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeTwo);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeTwoQuebecCount += 1;
+		percentAgeRangeTwoQuebec = percentAgeRangeTwoQuebec + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeTwoQuebecCount -= 1;
+			}
+		} 
+
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeThree);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeThreeQuebecCount += 1;
+		percentAgeRangeThreeQuebec = percentAgeRangeThreeQuebec + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeThreeQuebecCount -= 1;
+			}
+		} 
+	}
+       
+	double ageRangeOneQuebecAvg = (percentAgeRangeOneQuebec/ageRangeOneQuebecCount);
+	double ageRangeTwoQuebecAvg = (percentAgeRangeTwoQuebec/ageRangeTwoQuebecCount);
+	double ageRangeThreeQuebecAvg = (percentAgeRangeThreeQuebec/ageRangeThreeQuebecCount);
+		
+	printf("\nQuebec");
+	printf("\n35 to 49 years: %.2lf%%", ageRangeOneQuebecAvg);
+	printf("\n60 to 64 years: %.2lf%%", ageRangeTwoQuebecAvg);
+	printf("\n65 years and over: %.2lf%%", ageRangeThreeQuebecAvg);
+	printf("\n");
+	/* Quebec's Average Percentage of Diabetes for 3 Age Groups ENDS */
+
+	/* Ontario's Average Percentage of Diabetes for 3 Age Groups STARTS */
+	// Updating Bounds
+	upperBound += QuebecCount;
+	lowerBound += QuebecCount;
+
+	// Age Groups for Ontario
+	int ageRangeOneOntarioCount = 0; 
+	int ageRangeTwoOntarioCount = 0;
+	int ageRangeThreeOntarioCount = 0;
+		
+	double percentAgeRangeOneOntario = 0;
+	double percentAgeRangeTwoOntario = 0;
+	double percentAgeRangeThreeOntario = 0;
+
+	for(j = lowerBound; j < upperBound; j++) 
+	{
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeOne);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeOneOntarioCount += 1;
+		percentAgeRangeOneOntario = percentAgeRangeOneOntario + s[j].value;
+			if (s[j].value == 0)
+			{
+			ageRangeOneOntarioCount -= 1;
+			}
+		} 
+		
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeTwo);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeTwoOntarioCount += 1;
+		percentAgeRangeTwoOntario = percentAgeRangeTwoOntario + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeTwoOntarioCount -= 1;
+			}
+		} 
+
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeThree);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeThreeOntarioCount += 1;
+		percentAgeRangeThreeOntario = percentAgeRangeThreeOntario + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeThreeOntarioCount -= 1;
+			}
+		} 
+	}
+       
+	double ageRangeOneOntarioAvg = (percentAgeRangeOneOntario/ageRangeOneOntarioCount);
+	double ageRangeTwoOntarioAvg = (percentAgeRangeTwoOntario/ageRangeTwoOntarioCount);
+	double ageRangeThreeOntarioAvg = (percentAgeRangeThreeOntario/ageRangeThreeOntarioCount);
+	
+	printf("\nOntario");	 
+	printf("\n35 to 49 years: %.2lf%%", ageRangeOneOntarioAvg);
+	printf("\n60 to 64 years: %.2lf%%", ageRangeTwoOntarioAvg);
+	printf("\n65 years and over: %.2lf%%", ageRangeThreeOntarioAvg);
+	printf("\n");
+	/* Ontario's Average Percentage of Diabetes for 3 Age Groups ENDS */
+
+
+	/* Alberta's Average Percentage of Diabetes for 3 Age Groups STARTS */
+	// Updating Bounds
+	upperBound += OntarioCount;
+	lowerBound += OntarioCount;
+
+	// Age Groups for Alberta
+	int ageRangeOneAlbertaCount = 0; 
+	int ageRangeTwoAlbertaCount = 0;
+	int ageRangeThreeAlbertaCount = 0;
+		
+	double percentAgeRangeOneAlberta = 0;
+	double percentAgeRangeTwoAlberta = 0;
+	double percentAgeRangeThreeAlberta = 0;
+
+	for(j = lowerBound; j < upperBound; j++) 
+	{
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeOne);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeOneAlbertaCount += 1;
+		percentAgeRangeOneAlberta = percentAgeRangeOneAlberta + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeOneAlbertaCount -= 1;
+			}
+		} 
+		
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeTwo);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeTwoAlbertaCount += 1;
+		percentAgeRangeTwoAlberta = percentAgeRangeTwoAlberta + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeTwoAlbertaCount -= 1;
+			}
+		} 
+
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeThree);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeThreeAlbertaCount += 1;
+		percentAgeRangeThreeAlberta = percentAgeRangeThreeAlberta + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeThreeAlbertaCount -= 1;
+			}
+		} 
+	}
+       
+	double ageRangeOneAlbertaAvg = (percentAgeRangeOneAlberta/ageRangeOneAlbertaCount);
+	double ageRangeTwoAlbertaAvg = (percentAgeRangeTwoAlberta/ageRangeTwoAlbertaCount);
+	double ageRangeThreeAlbertaAvg = (percentAgeRangeThreeAlberta/ageRangeThreeAlbertaCount);
+		
+	printf("\nAlberta");
+	printf("\n35 to 49 years: %.2lf%%", ageRangeOneAlbertaAvg);
+	printf("\n60 to 64 years: %.2lf%%", ageRangeTwoAlbertaAvg);
+	printf("\n65 and years over: %.2lf%%", ageRangeThreeAlbertaAvg);
+	 printf("\n");
+	/* Alberta's Average Percentage of Diabetes for 3 Age Groups ENDS */
+
+
+	/* British Columbia's Average Percentage of Diabetes for 3 Age Groups STARTS */
+	// Updating Bounds
+	upperBound += AlbertaCount;
+	lowerBound += AlbertaCount;
+
+	// Age Groups for British Columbia
+	int ageRangeOneBCCount = 0; 
+	int ageRangeTwoBCCount = 0;
+	int ageRangeThreeBCCount = 0;
+	
+	double percentAgeRangeOneBC = 0;
+	double percentAgeRangeTwoBC = 0;
+	double percentAgeRangeThreeBC = 0;
+
+	for(j = lowerBound; j < upperBound; j++) 
+	{
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeOne);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeOneBCCount += 1;
+		percentAgeRangeOneBC = percentAgeRangeOneBC + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeOneBCCount -= 1;
+			}
+		} 
+		
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeTwo);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeTwoBCCount += 1;
+		percentAgeRangeTwoBC = percentAgeRangeTwoBC + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeTwoBCCount -= 1;
+			}
+		} 
+
+	comparisonFactor = strcmp(s[j].ageGroup, ageRangeThree);
+		if (comparisonFactor == 0) 
+		{
+		ageRangeThreeBCCount += 1;
+		percentAgeRangeThreeBC = percentAgeRangeThreeBC + s[j].value;
+			if (s[j].value == 0) 
+			{
+			ageRangeThreeBCCount -= 1;
+			}
+		} 
+	}
+       
+	double ageRangeOneBCAvg = (percentAgeRangeOneBC/ageRangeOneBCCount);
+	double ageRangeTwoBCAvg = (percentAgeRangeTwoBC/ageRangeTwoBCCount);
+	double ageRangeThreeBCAvg = (percentAgeRangeThreeBC/ageRangeThreeBCCount);
+		
+	printf("\nBritish Columbia");
+	printf("\n35 to 49 years: %.2lf%%", ageRangeOneBCAvg);
+	printf("\n60 to 64 years: %.2lf%%", ageRangeTwoBCAvg);
+	printf("\n65 and years over: %.2lf%%", ageRangeThreeBCAvg);
+	printf("\n");
+	/* British Columbia's Average Percentage of Diabetes for 3 Age Groups ENDS */
+	
+	printf("\n----------------------------------------- Question 2 -------------------------------------------\n");
+
+	printf("\nProvinces with the Highest and Lowest Percentages \n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+
+	// create variables for the lowest and highest
+	double lowestpercent, highestpercent;
+	char lowestpercentGEO[MAX_LENGTH], highestpercentGEO[MAX_LENGTH];
+	
+	//Send the four arguments to the function and use pointers to reteive the lowest and highest values to print
+    Question2(OntarioAvg, QuebecAvg, AlbertaAvg, BCAvg, &lowestpercent, &highestpercent);
+    
+    if (lowestpercent == OntarioAvg) 
+    {
+	strcpy(lowestpercentGEO,Ontario);
+	} 
+	  else if (lowestpercent == QuebecAvg) 
+	  {
+	  strcpy(lowestpercentGEO,Quebec);
+	  } 
+		else if (lowestpercent == AlbertaAvg) 
+		{
+		strcpy(lowestpercentGEO,Alberta);
+		} 
+		  else if (lowestpercent == BCAvg) 
+		  {
+		  strcpy(lowestpercentGEO,BC);
+		  }
+						
+    if (highestpercent == OntarioAvg) 
+    {
+	strcpy(highestpercentGEO,Ontario);
+	} else if (highestpercent == QuebecAvg) 
+	  {
+	  strcpy(highestpercentGEO,Quebec);
+	  } 
+	  else if (highestpercent == AlbertaAvg) 
+	   {
+	   strcpy(highestpercentGEO,Alberta);
+	   } 
+	   else if (highestpercent == BCAvg) 
+	     {
+		 strcpy(highestpercentGEO,BC);
+		 }
+	
+    printf("\n Lowest Percentage");
+    printf("\n %s: %.2lf%% ", lowestpercentGEO, lowestpercent);
+        
+    printf("\n");
+        
+    printf("\n Highest Percentage");
+    printf("\n %s: %.2lf%%\n",highestpercentGEO, highestpercent);	
+	
+	printf("\n----------------------------------------- Question 3 -------------------------------------------\n");	
+
+	printf("\nProvinces that Have Diabetes Percentages Above and Below the National Average \n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+
+       double comp[4] = {OntarioAvg, QuebecAvg, AlbertaAvg, BCAvg};
+        double Higherthan, Lowerthan;
+        //Creation of an array for each of the provinces and varibles for the lower and higher
+        //loops through the array and compares each entry with the nathional average
+        for (int i = 0; i<4; i++)
+        {
+        //if and if else statements for each entry for the scenarios of being higher or lower than the national average
+            if(comp[i]>=CanadaAvg)
+            {
+                Higherthan = comp[i];
+                if(Higherthan == comp[0])
+                {
+                    printf("\nOntario is above the national average, standing at %.2lf%%\n", OntarioAvg);
+                }
+                else if(Higherthan == comp[1])
+                {
+                    printf("Quebec is above the national average, standing at %.2lf%%\n", QuebecAvg);
+                }
+                else if(Higherthan == comp[2])
+                {
+                    printf("Alberta is above the national average, standing at %.2lf%%\n", AlbertaAvg);
+                }
+                else if(Higherthan == comp[3])
+                {
+                    printf("British Columbia is above the national average, standing at %.2lf%%\n", BCAvg);
+                }
+            }
+            else
+            Lowerthan = comp[i];
+                if(Lowerthan == comp[0])
+                {
+                    printf("Ontario is below the national average, standing at %.2lf%%\n", OntarioAvg);
+                }
+                else if(Lowerthan == comp[1])
+                {
+                    printf("Quebec is below the national average, standing at %.2lf%%\n", QuebecAvg);
+                }
+                else if(Lowerthan == comp[2])
+                {
+                    printf("Alberta is below the national average, standing at %.2lf%%\n", AlbertaAvg);
+                }
+                else if(Lowerthan == comp[3])
+                {
+                    printf("British Columbia is below the national average, standing at %.2lf%%\n", BCAvg);
+                }
+        }
+
+	printf("\n----------------------------------------- Question 4 -------------------------------------------\n");
+
+	printf("\nProvinces that had the Highest Percentage and Lowest Percentage Including Years \n");
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+
+	// Creation of variables to hold the province, year and percentage
+
+	double highestpercentoverall = 0, lowestpercentoverall = 10;
+	int highestpercentyear = 0, lowestpercentyear = 0;
+	char highestpercentprov[MAX_LENGTH], lowestpercentprov[MAX_LENGTH];
+    
+	// Creation of a For loop that runs through and compares all the % values and if the current value is larger than the pervious then it becomes the largest value until no other value is larger
+	// If a larger value is found, then the percentage is replaced and so is the corresponding year and province, this process is also used to determine the lowest percentage.
+	for (j = 0;j<MAX_LINE;j++) 
+	{
+			
+		if(s[j].value > highestpercentoverall) 
+		{
+		highestpercentoverall = s[j].value;
+		highestpercentyear = s[j].REF_date;
+		strcpy(highestpercentprov, s[j].GEO);
+		}
+			
+		if(s[j].value < lowestpercentoverall) 
+		{
+				
+			if(s[j].value != 0) 
+			{
+			lowestpercentoverall = s[j].value;
+			lowestpercentyear = s[j].REF_date;
+			strcpy(lowestpercentprov, s[j].GEO);
+			}
+		}
+	}
+	
+	printf("\n%s had the highest percentage at %.2lf%% in the year %d.\n", highestpercentprov, highestpercentoverall, highestpercentyear);
+	printf("%s had the lowest percentage at %.2lf%% in the year %d.\n", lowestpercentprov, lowestpercentoverall, lowestpercentyear);
+		
+	printf("\n------------------------------------------------------------------------------------------------\n");	
+	return(0);
+	
+	}
